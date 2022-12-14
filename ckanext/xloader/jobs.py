@@ -253,11 +253,15 @@ def _download_resource_data(resource, data, api_key, logger):
     cl = None
     try:
         headers = {}
-        if resource.get('url_type') == 'upload':
-            # If this is an uploaded file to CKAN, authenticate the request,
-            # otherwise we won't get file from private resources
-            headers['Authorization'] = api_key
-
+        ### 
+        # REALLY BAD HACK TO GET AROUND THE AUTHENTICATION PROBLEM
+        #if resource.get('url_type') == 'upload':
+        #    # If this is an uploaded file to CKAN, authenticate the request,
+        #    # otherwise we won't get file from private resources
+        #    headers['Authorization'] = api_key
+        ### END OF HACK
+        
+        headers['Authorization'] = api_key
         response = get_response(url, headers)
 
         cl = response.headers.get('content-length')
