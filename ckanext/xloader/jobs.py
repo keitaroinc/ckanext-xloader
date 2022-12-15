@@ -8,6 +8,7 @@ import urlparse
 import datetime
 import traceback
 import sys
+import os
 
 import requests
 from rq import get_current_job
@@ -31,7 +32,7 @@ else:
 if not SSL_VERIFY:
     requests.packages.urllib3.disable_warnings()
 
-MAX_CONTENT_LENGTH = int(config.get('ckanext.xloader.max_content_length') or 1e9)
+MAX_CONTENT_LENGTH = int(config.get('ckanext.xloader.max_content_length') or os.environ.get("CKANEXT__XLOADER__MAX_CONTENT_LENGTH"))
 MAX_EXCERPT_LINES = int(config.get('ckanext.xloader.max_excerpt_lines') or 0)
 CHUNK_SIZE = 16 * 1024  # 16kb
 DOWNLOAD_TIMEOUT = 30
