@@ -3,6 +3,7 @@
 import logging
 import json
 import datetime
+import os
 
 from dateutil.parser import parse as parse_date
 
@@ -70,7 +71,7 @@ def xloader_submit(context, data_dict):
     except logic.NotFound:
         return False
 
-    site_url = config['ckan.site_url']
+    site_url = os.environ.get("XLOADER_CKAN_URL")
     callback_url = site_url + '/api/3/action/xloader_hook'
 
     site_user = p.toolkit.get_action('get_site_user')({'ignore_auth': True}, {})
