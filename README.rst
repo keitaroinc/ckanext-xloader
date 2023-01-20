@@ -260,6 +260,12 @@ Configuration:
     # not be loaded into the datastore.
     ckanext.xloader.max_excerpt_lines = 100
 
+    # If set, it will rewrite the site url for fetching resources that have
+    # been uploaded to CKAN.
+    # It will also rewrite the URL for the Xloader webhooks calls back to CKAN.
+    # By default this option is empty - meaning no URL rewriting.
+    ckanext.xloader.rewrite_site_url=
+
 ------------------------
 Developer installation
 ------------------------
