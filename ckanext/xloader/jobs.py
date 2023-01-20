@@ -9,10 +9,12 @@ import datetime
 import traceback
 import sys
 import os
+import csv
 
 import requests
 from rq import get_current_job
 import sqlalchemy as sa
+import openpyxl
 
 from ckan.plugins.toolkit import get_action, asbool, ObjectNotFound
 try:
@@ -167,11 +169,32 @@ def xloader_data_into_datastore_(input, job_dict):
     logger.info('File hash: {}'.format(file_hash))
     resource['hash'] = file_hash  # TODO write this back to the actual resource
 
+    def convert_xlsx_to_csv(filename):
+        csv_filename = '{}.csv'.format(os.path.basename(filename))
+        tmp_csv_file = tempfile.NamedTemporaryFile(suffix=csv_filename)
+
+        wb = openpyxl.load_workbook(filename)
+        ws = wb.active
+
+        csv_writer = csv.writer(tmp_csv_file, quoting=csv.QUOTE_MINIMAL)
+        for row in ws.iter_rows(values_only=True):
+            csv_writer.writerow(row)
+        tmp_csv_file.seek(0)
+
+        return tmp_csv_file
+
     def direct_load():
+        resource_format = resource.get('format')
+        file_name = tmp_file.name
+        if resource_format.lower() == 'xlsx':
+            csv_tmp_file = convert_xlsx_to_csv(file_name)
+            resource_format = 'CSV'
+            file_name = csv_tmp_file.name
+
         fields = loader.load_csv(
-            tmp_file.name,
+            file_name,
             resource_id=resource['id'],
-            mimetype=resource.get('format'),
+            mimetype=resource_format,
             logger=logger)
         loader.calculate_record_count(
             resource_id=resource['id'], logger=logger)
