@@ -21,6 +21,7 @@ except ImportError:
     from pylons import config
 import ckan.lib.search as search
 
+import ckanext.xloader.helpers as xloader_helpers
 import loader
 import db
 from job_exceptions import JobError, HTTPError, DataTooBigError, FileCouldNotBeLoadedError
@@ -226,7 +227,7 @@ def xloader_data_into_datastore_(input, job_dict):
 
 
 def _rewrite_resource_download_url(resource_url):
-    xloader_ckan_site_url = config.get('ckanext.xloader.rewrite_site_url')
+    xloader_ckan_site_url = xloader_helpers.get_rewrite_url()
     if not xloader_ckan_site_url:
         return resource_url
     site_url = config.get('ckan.site_url')

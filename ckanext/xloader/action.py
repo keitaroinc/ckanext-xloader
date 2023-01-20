@@ -13,6 +13,7 @@ import ckan.plugins as p
 from ckan.logic import side_effect_free
 
 import ckanext.xloader.schema
+import ckanext.xloader.helpers as xloader_helpers
 import interfaces as xloader_interfaces
 import jobs
 import db
@@ -71,7 +72,9 @@ def xloader_submit(context, data_dict):
     except logic.NotFound:
         return False
 
-    site_url = config.get('ckanext.xloader.rewrite_site_url', config.get('ckan.site_url'))
+    site_url = xloader_helpers.get_rewrite_url()
+    if not site_url:
+        site_url = config.get('ckan.site_url')
     callback_url = site_url + '/api/3/action/xloader_hook'
 
     site_user = p.toolkit.get_action('get_site_user')({'ignore_auth': True}, {})
