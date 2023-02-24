@@ -75,6 +75,7 @@ def xloader_data_into_datastore(input):
 
     job_id = get_current_job().id
     errored = False
+    job_start = time.time()
     try:
         xloader_data_into_datastore_(input, job_dict)
         job_dict['status'] = 'complete'
@@ -100,6 +101,8 @@ def xloader_data_into_datastore(input):
                                             api_key=input['api_key'],
                                             job_dict=job_dict)
         errored = errored or not is_saved_ok
+        log = logging.getLogger(__name__)
+        log.info('xloader:time: import total time: %fs', time.time() - job_start)
     return 'error' if errored else None
 
 
