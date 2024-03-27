@@ -96,10 +96,14 @@ def get_xloader_user_apitoken():
     site_user.
     """
     api_token = p.toolkit.config.get('ckanext.xloader.api_token', None)
+    print("========================HERE 2=======================")
+    print(api_token)
     if api_token:
         return api_token
 
     site_user = p.toolkit.get_action('get_site_user')({'ignore_auth': True}, {})
+    print("========================HERE 3=======================")
+    print(site_user)
     return site_user["apikey"]
 
 

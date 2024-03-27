@@ -33,6 +33,8 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
+log.info("========================HERE 1=======================")
+log.info(get_user_from_token)
 SSL_VERIFY = asbool(config.get('ckanext.xloader.ssl_verify', True))
 if not SSL_VERIFY:
     requests.packages.urllib3.disable_warnings()
