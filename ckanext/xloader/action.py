@@ -51,6 +51,17 @@ def xloader_submit(context, data_dict):
     if errors:
         raise p.toolkit.ValidationError(errors)
 
+
+    print('====================p.toolkit.check_access==================================')
+    print(p.toolkit.check_access('xloader_submit', context, data_dict))
+    print('====================p.toolkit.check_access==================================')
+    print('====================context==================================')
+    print(context)
+    print('====================context==================================')
+    print('====================data_dict==================================')
+    print(data_dict)
+    print('====================data_dict==================================')
+
     p.toolkit.check_access('xloader_submit', context, data_dict)
 
     res_id = data_dict['resource_id']
