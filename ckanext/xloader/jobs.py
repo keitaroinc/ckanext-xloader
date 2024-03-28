@@ -162,10 +162,24 @@ def xloader_data_into_datastore_(input, job_dict):
 
     validate_input(input)
 
+    print('==============od ovde api key se bara========================')
     data = input['metadata']
+    print('==============data========================')
+    print(data)
+    print('==============data========================')
 
     resource_id = data['resource_id']
+
+    print('==============resource_id========================')
+    print(resource_id)
+    print('==============resource_id========================')
+
+
     api_key = input.get('api_key')
+    print('==============api_key========================')
+    print(api_key)
+    print('==============api_key========================')
+
     try:
         resource, dataset = get_resource_and_dataset(resource_id, api_key)
     except (JobError, ObjectNotFound):
@@ -509,6 +523,9 @@ def _get_user_from_key(api_key_or_token):
         user = model.Session.query(model.User).filter_by(
             apikey=api_key_or_token
         ).first()
+    print('============================user==============================')
+    print(user)
+    print('============================user==============================')
     return user
 
 
