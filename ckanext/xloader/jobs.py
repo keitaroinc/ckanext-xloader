@@ -81,12 +81,20 @@ def xloader_data_into_datastore(input):
     # First flag that this task is running, to indicate the job is not
     # stillborn, for when xloader_submit is deciding whether another job would
     # be a duplicate or not
+
+    print('======================vo xloader_data_into_datastore si==================')
     job_dict = dict(metadata=input['metadata'],
                     status='running')
     callback_xloader_hook(result_url=input['result_url'],
                           api_key=input['api_key'],
                           job_dict=job_dict)
-
+    print('======================callback_xloader_hook====================================')
+    print(callback_xloader_hook)
+    print('==============================result_url============================')
+    print(input['result_url'])
+    print('============================api_key==============================')
+    print(input['api_key'])
+    print('======================callback_xloader_hook====================================')
     job_id = get_current_job().id
     errored = False
     try:
