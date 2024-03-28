@@ -140,6 +140,7 @@ def xloader_data_into_datastore_(input, job_dict):
 
     (datapusher called this function 'push_to_datastore')
     '''
+    print('=====================vo xloader_data_into_datastore_ funkcijata sum=============== ')
     job_id = get_current_job().id
     db.init(config)
 
