@@ -175,6 +175,7 @@ def xloader_submit(context, data_dict):
     log.debug("Timeout for XLoading resource %s is %s", res_id, timeout)
 
     try:
+        print('==============vo xloader submit si======================')
         job = enqueue_job(
             jobs.xloader_data_into_datastore, [data],
             title="xloader_submit: package: {} resource: {}".format(resource_dict.get('package_id'), res_id),

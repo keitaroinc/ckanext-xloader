@@ -308,6 +308,7 @@ def _download_resource_data(resource, data, api_key, logger):
     data['datastore_contains_all_records_of_source_file'] = False
     which will be saved to the resource later on.
     '''
+    print('====================vo _download_resource_data sum =====================')
     # check scheme
     url = resource.get('url')
 
@@ -464,6 +465,7 @@ def callback_xloader_hook(result_url, api_key, job_dict):
     function 'xloader_hook'). Usually called by the xloader queue job.
     Returns whether it managed to call the sh
     '''
+    print('====================vo callback_xloader_hook =====================')
     api_key_from_job = job_dict.pop('api_key', None)
     if not api_key:
         api_key = api_key_from_job
@@ -542,6 +544,7 @@ def get_resource_and_dataset(resource_id, api_key):
     """
     Gets available information about the resource and its dataset from CKAN
     """
+    print('============================vo get_resource_and_dataset sum==============================')
     context = None
     user = _get_user_from_key(api_key)
     if user is not None:
@@ -573,6 +576,7 @@ def check_response(response, request_url, who, good_status=(201, 200),
     :param good_status: Status codes that should not raise an exception
 
     """
+    print('============================vo check_response sum==============================')
     if not response.status_code:
         raise HTTPError(
             'Xloader received an HTTP response with no status code',
