@@ -13,6 +13,7 @@ from dateutil.parser import parse as parse_date
 from dateutil.parser import isoparse as parse_iso_date
 
 import ckanext.xloader.schema
+import ckanext.xloader.helpers as xloader_helpers
 
 from . import interfaces as xloader_interfaces, jobs, db, utils
 
@@ -67,6 +68,11 @@ def xloader_submit(context, data_dict):
         })
     except p.toolkit.ObjectNotFound:
         return False
+
+    site_url = xloader_helpers.get_rewrite_url()
+    if not site_url:
+        site_url = config.get('ckan.site_url')
+    callback_url = site_url + '/api/3/action/xloader_hook'
 
     for plugin in p.PluginImplementations(xloader_interfaces.IXloader):
         upload = plugin.can_upload(res_id)

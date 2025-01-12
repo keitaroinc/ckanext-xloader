@@ -1,3 +1,4 @@
+import os
 import ckan.plugins.toolkit as toolkit
 from ckanext.xloader.utils import XLoaderFormats
 from markupsafe import Markup
@@ -29,6 +30,10 @@ def xloader_status_description(status):
     else:
         return _('Not Uploaded Yet')
 
+def get_rewrite_url():
+    if os.getenv('CKANEXT__XLOADER__REWRITE_SITE_URL'):
+        return os.getenv('CKANEXT__XLOADER__REWRITE_SITE_URL')
+    return toolkit.config.get('ckanext.xloader.rewrite_site_url')
 
 def is_resource_supported_by_xloader(res_dict, check_access=True):
     is_supported_format = XLoaderFormats.is_it_an_xloader_format(res_dict.get('format'))

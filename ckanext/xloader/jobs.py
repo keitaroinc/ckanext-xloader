@@ -20,6 +20,7 @@ import sqlalchemy as sa
 
 from ckan import model
 from ckan.plugins.toolkit import get_action, asbool, enqueue_job, ObjectNotFound, config
+import ckanext.xloader.helpers as xloader_helpers
 
 from . import db, loader
 from .job_exceptions import JobError, HTTPError, DataTooBigError, FileCouldNotBeLoadedError
@@ -277,6 +278,16 @@ def xloader_data_into_datastore_(input, job_dict, logger):
     logger.info('Express Load completed')
 
 
+def _rewrite_resource_download_url(resource_url):
+    xloader_ckan_site_url = config.get('ckanext.xloader.rewrite_site_url')
+    if not xloader_ckan_site_url:
+        return resource_url
+    site_url = config.get('ckan.site_url')
+    if resource_url.lower().startswith(site_url.lower()):
+        return xloader_ckan_site_url + resource_url[len(site_url):]
+    return resource_url
+
+
 def _download_resource_data(resource, data, api_key, logger):
     '''Downloads the resource['url'] as a tempfile.
 
@@ -292,6 +303,10 @@ def _download_resource_data(resource, data, api_key, logger):
     '''
     # check scheme
     url = resource.get('url')
+
+    # Rewrite the URL if configured
+    url = _rewrite_resource_download_url(url)
+
     url_parts = urlsplit(url)
     scheme = url_parts.scheme
     if scheme not in ('http', 'https', 'ftp'):
