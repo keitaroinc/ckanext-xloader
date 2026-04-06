@@ -123,12 +123,16 @@ class xloaderPlugin(plugins.SingletonPlugin):
         context = {
             "ignore_auth": True,
         }
-        resource_dict = toolkit.get_action("resource_show")(
-            context,
-            {
-                "id": entity.id,
-            },
-        )
+        # Only act on create/update
+        if operation not in ['new', 'changed']:
+            return
+
+        try:
+            resource_dict = toolkit.get_action("resource_show")(
+                context, {"id": entity.id}
+            )
+        except toolkit.ObjectNotFound:
+            return
 
         if _should_remove_unsupported_resource_from_datastore(resource_dict):
             toolkit.enqueue_job(fn=_remove_unsupported_resource_from_datastore, args=[entity.id])
