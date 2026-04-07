@@ -121,7 +121,7 @@ def get_job(job_id):
 
     # Turn the result into a dictionary representation of the job.
     result_dict = {}
-    for field in list(result.keys()):
+    for field in list(result._mapping.keys()):
         value = getattr(result, field)
         if value is None:
             result_dict[field] = value
