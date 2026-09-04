@@ -20,6 +20,7 @@ it. These tests pin that behaviour without needing a database: the engine is
 a stub that records the SQL it was handed.
 """
 import psycopg2
+from psycopg2 import errorcodes
 import pytest
 import sqlalchemy as sa
 
@@ -29,12 +30,28 @@ from ckanext.xloader import loader
 RESOURCE_ID = "65dd096f-7296-40e8-8cfe-e26b928bcce5"
 
 
-def denied():
-    """A SQLAlchemy wrapper around SQLSTATE 42501, as psycopg2 raises it."""
+def denied_with_pgcode():
+    """SQLSTATE 42501 as the driver raises it: pgcode set from the server.
+
+    This is the shape production actually sees.
+    """
+    orig = psycopg2.errors.InsufficientPrivilege(
+        "permission denied for table {0}".format(RESOURCE_ID))
+    orig.pgcode = errorcodes.INSUFFICIENT_PRIVILEGE
+    return sa.exc.ProgrammingError("TRUNCATE", {}, orig)
+
+
+def denied_class_only():
+    """The same error constructed directly, so carrying no pgcode.
+
+    psycopg2 only populates pgcode from a server response, so a
+    hand-built error has the class and nothing else. Both shapes must be
+    recognised.
+    """
     return sa.exc.ProgrammingError(
         "TRUNCATE", {},
         psycopg2.errors.InsufficientPrivilege(
-            "permission denied for table {0}".format(RESOURCE_ID)))
+            "must be owner of sequence {0}__id_seq".format(RESOURCE_ID)))
 
 
 def syntax_error():
@@ -50,7 +67,7 @@ class FakeEngine(object):
     ``error`` returns.
     """
 
-    def __init__(self, fail_on=None, error=denied):
+    def __init__(self, fail_on=None, error=denied_with_pgcode):
         self.statements = []
         self.fail_on = fail_on
         self.error = error
@@ -95,9 +112,14 @@ def test_truncate_is_used_when_permitted(install_engine):
     assert not any("DELETE FROM" in s for s in engine.statements)
 
 
-def test_delete_is_used_when_truncate_is_denied(install_engine):
-    """InsufficientPrivilege on TRUNCATE must fall back, not fail the job."""
-    engine = install_engine(fail_on="TRUNCATE TABLE")
+@pytest.mark.parametrize("error", [denied_with_pgcode, denied_class_only],
+                         ids=["pgcode", "class-only"])
+def test_delete_is_used_when_truncate_is_denied(install_engine, error):
+    """InsufficientPrivilege on TRUNCATE must fall back, not fail the job.
+
+    Covers both shapes: pgcode set by the driver, and class only.
+    """
+    engine = install_engine(fail_on="TRUNCATE TABLE", error=error)
 
     loader._clear_datastore_resource(RESOURCE_ID)
 
