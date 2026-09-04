@@ -30,15 +30,25 @@ from ckanext.xloader import loader
 RESOURCE_ID = "65dd096f-7296-40e8-8cfe-e26b928bcce5"
 
 
+class DriverError(Exception):
+    """Stands in for an error raised by the driver, which carries pgcode.
+
+    psycopg2 exposes pgcode as a read-only attribute populated from the
+    server response, so it cannot be set on a real exception instance.
+    This carries the attribute the loader reads, which is what matters.
+    """
+
+    pgcode = errorcodes.INSUFFICIENT_PRIVILEGE
+
+
 def denied_with_pgcode():
-    """SQLSTATE 42501 as the driver raises it: pgcode set from the server.
+    """SQLSTATE 42501 as the driver surfaces it, via pgcode.
 
     This is the shape production actually sees.
     """
-    orig = psycopg2.errors.InsufficientPrivilege(
-        "permission denied for table {0}".format(RESOURCE_ID))
-    orig.pgcode = errorcodes.INSUFFICIENT_PRIVILEGE
-    return sa.exc.ProgrammingError("TRUNCATE", {}, orig)
+    return sa.exc.ProgrammingError(
+        "TRUNCATE", {},
+        DriverError("permission denied for table {0}".format(RESOURCE_ID)))
 
 
 def denied_class_only():
