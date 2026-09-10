@@ -10,6 +10,7 @@ import tempfile
 from decimal import Decimal
 
 import psycopg2
+from psycopg2 import errorcodes
 from chardet.universaldetector import UniversalDetector
 from six.moves import zip
 from tabulator import config as tabulator_config, EncodingError, Stream, TabulatorException
@@ -134,13 +135,48 @@ def _fields_match(fields, existing_fields, logger):
     return FieldMatch.NAME_MATCH if type_changed else FieldMatch.EXACT_MATCH
 
 
+def _is_insufficient_privilege(error):
+    ''' True for PostgreSQL SQLSTATE 42501, however psycopg2 surfaces it.
+
+    Errors raised by the driver from a server response carry ``pgcode``.
+    Errors constructed directly, as in tests, carry only their class, so
+    check both rather than relying on one.
+    '''
+    if getattr(error, 'pgcode', None) == errorcodes.INSUFFICIENT_PRIVILEGE:
+        return True
+    errors = getattr(psycopg2, 'errors', None)
+    insufficient_privilege = getattr(errors, 'InsufficientPrivilege', None)
+    return (insufficient_privilege is not None
+            and isinstance(error, insufficient_privilege))
+
+
 def _clear_datastore_resource(resource_id):
     ''' Delete all records from the datastore table, without dropping the table itself.
+
+    TRUNCATE is the fast path, but it needs the TRUNCATE privilege on the
+    table, and RESTART IDENTITY additionally needs ownership of the table's
+    _id sequence. Where the datastore write role holds neither, PostgreSQL
+    raises InsufficientPrivilege and the whole xloader job fails with
+    "permission denied for table" or "must be owner of sequence".
+
+    DELETE FROM needs only the DELETE privilege, which that role always has,
+    so fall back to it rather than losing the load. The fallback leaves the
+    _id sequence where it was instead of restarting it at 1: rows are still
+    numbered uniquely, and nothing reads _id as a row count, so the only
+    visible difference is the starting value after a reload.
     '''
     engine = get_write_engine()
-    with engine.begin() as conn:
-        conn.execute(sa.text("SET LOCAL lock_timeout = '15s'"))
-        conn.execute(sa.text('TRUNCATE TABLE "{}" RESTART IDENTITY'.format(resource_id)))
+    try:
+        with engine.begin() as conn:
+            conn.execute(sa.text("SET LOCAL lock_timeout = '15s'"))
+            conn.execute(
+                sa.text('TRUNCATE TABLE "{}" RESTART IDENTITY'.format(resource_id)))
+    except sa.exc.ProgrammingError as error:
+        if not _is_insufficient_privilege(error.orig):
+            raise
+        with engine.begin() as conn:
+            conn.execute(sa.text("SET LOCAL lock_timeout = '15s'"))
+            conn.execute(sa.text('DELETE FROM "{}"'.format(resource_id)))
 
 
 def copy_file(csv_filepath, engine, logger, resource_id, headers, delimiter):
